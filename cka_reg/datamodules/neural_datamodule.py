@@ -59,7 +59,7 @@ class StimuliBaseModule(LightningDataModule):
                     translate=self.translate,
                     scale=self.scale,
                     shear=self.shear,
-                    fillcolor=127,
+                    fill=127,
                 ),
                 # transform_lib.ColorJitter(
                 #    brightness=self.brightness,

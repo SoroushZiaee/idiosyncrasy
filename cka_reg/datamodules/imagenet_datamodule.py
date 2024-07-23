@@ -19,7 +19,7 @@ class ImagenetDataModule(LightningDataModule):
         self.hparams.update(vars(hparams))
         self.image_size = hparams.image_size
         self.dims = (3, self.image_size, self.image_size)
-        self.data_dir = IMAGENET_PATH
+        self.root = IMAGENET_PATH
         self.meta_dir = os.path.expanduser(
             "~/projects/def-kohitij/soroush1/pretrain-imagenet/data/ImageNet"
         )
@@ -88,7 +88,7 @@ class ImagenetDataModule(LightningDataModule):
         Uses the validation split of imagenet2012 for testing
         """
         transforms = self.val_transform()
-        dataset = self._get_dataset("val", transforms)
+        dataset = self._get_dataset("validation", transforms)
         loader = self._get_DataLoader(
             dataset,
             batch_size=self.batch_size,

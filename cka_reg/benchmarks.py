@@ -10,9 +10,11 @@ from sklearn import preprocessing
 
 # NEURAL_DATA_PATH = '/om2/user/dapello'
 if platform.node().startswith("node"):
-    NEURAL_DATA_PATH = f"/om2/user/{getpass.getuser()}/from_dapello"
+    # NEURAL_DATA_PATH = f"/om2/user/{getpass.getuser()}/from_dapello"
+    NEURAL_DATA_PATH = f"/home/soroush1/scratch/idiosyncrasy/"
 else:
-    NEURAL_DATA_PATH = f"/braintree/home/{getpass.getuser()}/data/from_dapello"
+    # NEURAL_DATA_PATH = f"/braintree/home/{getpass.getuser()}/data/from_dapello"
+    NEURAL_DATA_PATH = f"/home/soroush1/scratch/idiosyncrasy/"
 
 
 def wrap_model(identifier, model, image_size):

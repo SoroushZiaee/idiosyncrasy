@@ -12,6 +12,7 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 
 from lightning import LightningModule
+from lightning.pytorch.utilities import CombinedLoader
 
 from cka_reg.losses import NEURAL_LOSSES
 from cka_reg.datamodules.neural_datamodule import NeuralDataModule
@@ -51,9 +52,12 @@ class Model_Lightning(LightningModule):
     ]
     LAYER_MAPS = LAYER_MAPS
 
-    def __init__(self, hparams, dm, *args, **kwargs):
+    def __init__(
+        self, hparams, dm, multiple_trainloader_mode="min_size", *args, **kwargs
+    ):
         super().__init__()
         self.dm = dm
+        self.multiple_trainloader_mode = multiple_trainloader_mode
         self.hparams.update(vars(hparams))
         self.record_time = hparams.record_time
         self.loss_weights = hparams.loss_weights
@@ -103,7 +107,7 @@ class Model_Lightning(LightningModule):
         loaders = {key: self.dm[key].train_dataloader() for key in self.dm}
         # loaders = [self.dm[key].train_dataloader() for key in self.dm]
 
-        return loaders
+        return CombinedLoader(loaders, mode=self.multiple_trainloader_mod)
 
     def val_dataloader(self):
         # we just run ImageNet val through the normal val_dataloader -- the neural validation is handled in validation_epoch_end
@@ -186,12 +190,12 @@ class Model_Lightning(LightningModule):
             losses.append(self.classification(batch, mode))
             if self.hparams.adv_eval_images:
                 losses.append(
-                    self.classification(batch, f"adv_{mode}", adversarial=True)
+                    self.classification(batch, f"adv_{mode}", adversarial=False)
                 )
 
         return sum(losses)
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self, outputs):
         # we do the real neural validation work here
         if "NeuralData" in self.dm.keys():
             ch.cuda.empty_cache()

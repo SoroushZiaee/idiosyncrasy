@@ -12,11 +12,19 @@ from lightning.pytorch.callbacks import (
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from cka_reg.datamodules import DATAMODULES
-from cka_reg.model_lightning import Model_Lightning as MODEL
 from cka_reg.datamodules.neural_datamodule import SOURCES as NEURAL_SOURCES
-from cka_reg.datamodules.behavior_datamodule import SOURCES as BEHAVIOR_SOURCES
+
+# from cka_reg.datamodules.behavior_datamodule import SOURCES as BEHAVIOR_SOURCES
+
+print(f"data module is loaded")
+
+from cka_reg.model_lightning import Model_Lightning as MODEL
+
+print(f"model is loaded")
+
 from cka_reg.benchmarks import list_brainscore_benchmarks, list_behavior_benchmarks
 
+print(f"model is loaded")
 from cka_reg import PROJECT_ROOT
 
 
@@ -34,12 +42,17 @@ def main(hparams):
     deterministic = seed(hparams)
     logger = set_logger(hparams)
 
+    print(f"{hparams.datamodule = }")
     dm = {
         module_name: DATAMODULES[module_name](hparams)
         for module_name in hparams.datamodule
     }
 
-    model = MODEL(hparams, dm)
+    model = MODEL(
+        hparams,
+        dm,
+        multiple_trainloader_mode="min_size",
+    )
     lr_monitor = LearningRateMonitor(logging_interval="step")
     ckpt_callback = ModelCheckpoint(
         verbose=hparams.verbose,
@@ -55,15 +68,13 @@ def main(hparams):
         max_epochs=hparams.epochs,
         check_val_every_n_epoch=hparams.val_every,
         limit_val_batches=hparams.val_batches,
-        checkpoint_callback=ckpt_callback,
         num_nodes=hparams.num_nodes,
         logger=logger,
-        callbacks=[lr_monitor],  #   PrintingCallback()],
+        callbacks=[lr_monitor, ckpt_callback],  #   PrintingCallback()],
         deterministic=deterministic,
-        multiple_trainloader_mode="min_size",
         profiler="simple",
-        log_gpu_memory=True,
         precision=16,
+        fast_dev_run=True,
     )
 
     if hparams.evaluate:
@@ -249,7 +260,7 @@ def get_args(*args):
         "--behavior_dataset",
         dest="behavior_dataset",
         default="manymonkeys",
-        choices=BEHAVIOR_SOURCES.keys(),
+        # choices=BEHAVIOR_SOURCES.keys(),
         help="which source behavioral dataset to construct from",
     )
     parent_parser.add_argument(
