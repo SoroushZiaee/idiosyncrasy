@@ -66,12 +66,37 @@ def LogCenteredKernelAlignment0():
     return _CenteredKernelAlignment(fnc=fnc, name="logCKA0")
 
 
-def CKA(X: Tensor, Y: Tensor) -> Tensor:
-    return frobdot(X, Y) ** 2 / (frobdot(X, X) * frobdot(Y, Y))
+def chunked_frobdot(X: Tensor, Y: Tensor, chunk_size: int = 16) -> Tensor:
+    result = 0
+    for i in range(0, Y.shape[1], chunk_size):
+        end = min(i + chunk_size, Y.shape[1])
+        Y_chunk = Y[:, i:end]
+        result += ch.sum(ch.matmul(Y_chunk.t(), X) ** 2)
+    return ch.sqrt(result)
+
+
+def chunked_CKA(X: Tensor, Y: Tensor, chunk_size: int = 16) -> Tensor:
+    dot_XY = chunked_frobdot(X, Y, chunk_size)
+    dot_XX = chunked_frobdot(X, X, chunk_size)
+    dot_YY = chunked_frobdot(Y, Y, chunk_size)
+    return dot_XY**2 / (dot_XX * dot_YY)
 
 
 def frobdot(X: Tensor, Y: Tensor) -> Tensor:
-    return ch.norm(ch.matmul(Y.t(), X), p="fro")
+    return chunked_frobdot(X, Y)
+
+
+def CKA(X: Tensor, Y: Tensor) -> Tensor:
+    return chunked_CKA(X, Y)
+
+
+# Older version
+# def CKA(X: Tensor, Y: Tensor) -> Tensor:
+#     return frobdot(X, Y) ** 2 / (frobdot(X, X) * frobdot(Y, Y))
+
+# Older version
+# def frobdot(X: Tensor, Y: Tensor) -> Tensor:
+#     return ch.norm(ch.matmul(Y.t(), X), p="fro")
 
 
 # alternate implementation:

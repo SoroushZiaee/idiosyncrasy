@@ -82,6 +82,9 @@ class Model_Lightning(LightningModule):
     def forward(self, x):
         return self.model(x)
 
+    def setup(self, stage=None):
+        self.model = self.model.to(self.device)
+
     def configure_optimizers(self):
         param_list, lr = self.parameters(), self.hparams.lr
 
@@ -107,7 +110,7 @@ class Model_Lightning(LightningModule):
         loaders = {key: self.dm[key].train_dataloader() for key in self.dm}
         # loaders = [self.dm[key].train_dataloader() for key in self.dm]
 
-        return CombinedLoader(loaders, mode=self.multiple_trainloader_mod)
+        return CombinedLoader(loaders, mode=self.multiple_trainloader_mode)
 
     def val_dataloader(self):
         # we just run ImageNet val through the normal val_dataloader -- the neural validation is handled in validation_epoch_end
@@ -195,7 +198,7 @@ class Model_Lightning(LightningModule):
 
         return sum(losses)
 
-    def on_validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):  # remove outputs
         # we do the real neural validation work here
         if "NeuralData" in self.dm.keys():
             ch.cuda.empty_cache()
@@ -585,6 +588,10 @@ class Model_Lightning(LightningModule):
         self.set_bn(mode="Stimuli")
         X, H, Y = self.unpack_batch(batch, flag="similarity")
 
+        # Move X to the same device as the model
+        device = next(self.model.parameters()).device
+        X = X.to(device)
+
         if adversarial:
             # adversarially attack on labels. requires HVM readouts to be trained.
             X = self.adversaries[f"{mode}_neural_adversary"].generate(
@@ -593,6 +600,9 @@ class Model_Lightning(LightningModule):
 
         _ = self.model(X)
         H_hat = self.regions[region].output
+
+        # Move H to the same device as H_hat
+        H = H.to(H_hat.device)
 
         # this allows to test with a different loss than the train loss.
         neural_loss_fnc = self.neural_loss if mode == "train" else self.neural_val_loss
