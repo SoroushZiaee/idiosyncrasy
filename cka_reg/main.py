@@ -47,6 +47,10 @@ def main(hparams):
         module_name: DATAMODULES[module_name](hparams)
         for module_name in hparams.datamodule
     }
+    
+    # Prepare data and setup
+    dm["ImageNet"].prepare_data()
+    dm["ImageNet"].setup()
 
     model = MODEL(
         hparams,
@@ -73,8 +77,8 @@ def main(hparams):
         callbacks=[lr_monitor, ckpt_callback],  #   PrintingCallback()],
         deterministic=deterministic,
         profiler="simple",
-        precision=16,
-        fast_dev_run=True,
+        # precision=16,
+        fast_dev_run=False,
     )
 
     if hparams.evaluate:
@@ -246,6 +250,22 @@ def get_args(*args):
         ],
         choices=DATAMODULES.keys(),
         help="which datamodule to use.",
+    )
+    parent_parser.add_argument(
+        "--temp_extract",
+        default=False,
+        help="which datamodule to use.",
+    )
+    parent_parser.add_argument(
+        "--pin_memories",
+        nargs="+",
+        # default=['ImageNet', 'NeuralData', 'StimuliClassification'], choices=DATAMODULES.keys(),
+        default=[
+            False,
+            False,
+            False
+        ],
+        help="Pin to memory",
     )
     parent_parser.add_argument(
         "-nd",

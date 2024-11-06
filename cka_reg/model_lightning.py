@@ -44,6 +44,8 @@ MODEL_NAMES = sorted(
 class Model_Lightning(LightningModule):
 
     NEURAL_LOSSES = NEURAL_LOSSES
+    # f = fitted, u = unfitted. ie fnuerons.ustimuli => run benchmark on fitted neurons and unfitted stimuli
+    # this should not be called BENCHMARKS, to be consistent with brainscore terminology. PARTITION maybe?
     BENCHMARKS = [
         "fneurons.fstimuli",
         "fneurons.ustimuli",
@@ -606,6 +608,7 @@ class Model_Lightning(LightningModule):
 
         # this allows to test with a different loss than the train loss.
         neural_loss_fnc = self.neural_loss if mode == "train" else self.neural_val_loss
+        
         loss = neural_loss_fnc(H, H_hat)
         log = {f"{neural_loss_fnc.name}_{mode}": loss}
 
@@ -630,7 +633,9 @@ class Model_Lightning(LightningModule):
 
         # this allows to test with a different loss than the train loss.
         neural_loss_fnc = self.neural_loss if mode == "train" else self.neural_val_loss
+        
         neural_loss = neural_loss_fnc(H, H_hat)
+        # print(neural_loss)
 
         # and compute classification loss  accuracy
         class_loss = F.cross_entropy(Y_hat, Y)

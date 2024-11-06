@@ -5,7 +5,7 @@ import os, platform, getpass
 
 PROJECT_ROOT = str(Path(cka_reg.__file__).parents[1])
 # print(f"{PROJECT_ROOT = }")
-IMAGENET_PATH = "/datashare/ImageNet/ILSVRC2012"
+IMAGENET_PATH = "/home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/imagenet"
 
 # print(f"{platform.node() = }")
 

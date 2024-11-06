@@ -1,6 +1,10 @@
+import gc
 import torch as ch
 from torch import Tensor
 from torch.nn import Module
+
+from CKA import CudaCKA
+from CKA import CKA as CpuCKA
 
 
 import torch as ch
@@ -13,22 +17,20 @@ class _CenteredKernelAlignment(Module):
         super(_CenteredKernelAlignment, self).__init__()
         self.fnc = fnc
         self.name = name
-        self.device = device
+        self.device = device 
+        self.device = "cuda"
+        self.cuda_cka = CudaCKA(self.device).linear_CKA
 
     def forward(self, X: Tensor, Y: Tensor) -> Tensor:
-        if self.device == "gpu":
-            X = X.cuda()
-            Y = Y.cuda()
-        elif self.device == "cpu":
-            X = X.cpu()
-            Y = Y.cpu()
-
+        
         assert X.shape[0] == Y.shape[0]
         X, Y = X.view(X.shape[0], -1), Y.view(Y.shape[0], -1)
         X = X - X.mean(dim=0)
         Y = Y - Y.mean(dim=0)
-        # return ch.log(self.start - CKA(X, Y))
-        return self.fnc(CKA(X, Y))
+        
+        output = self.fnc(self.cuda_cka(X, Y))
+        
+        return output
 
 
 def LogCenteredKernelAlignment():
@@ -82,21 +84,21 @@ def chunked_CKA(X: Tensor, Y: Tensor, chunk_size: int = 16) -> Tensor:
     return dot_XY**2 / (dot_XX * dot_YY)
 
 
-def frobdot(X: Tensor, Y: Tensor) -> Tensor:
-    return chunked_frobdot(X, Y)
-
-
-def CKA(X: Tensor, Y: Tensor) -> Tensor:
-    return chunked_CKA(X, Y)
-
-
-# Older version
-# def CKA(X: Tensor, Y: Tensor) -> Tensor:
-#     return frobdot(X, Y) ** 2 / (frobdot(X, X) * frobdot(Y, Y))
-
-# Older version
 # def frobdot(X: Tensor, Y: Tensor) -> Tensor:
-#     return ch.norm(ch.matmul(Y.t(), X), p="fro")
+#     return chunked_frobdot(X, Y)
+
+
+# def CKA(X: Tensor, Y: Tensor) -> Tensor:
+#     return chunked_CKA(X, Y)
+
+
+# Older version
+def CKA(X: Tensor, Y: Tensor) -> Tensor:
+    return frobdot(X, Y) ** 2 / (frobdot(X, X) * frobdot(Y, Y))
+
+# Older version
+def frobdot(X: Tensor, Y: Tensor) -> Tensor:
+    return ch.norm(ch.matmul(Y.t(), X), p="fro")
 
 
 # alternate implementation:

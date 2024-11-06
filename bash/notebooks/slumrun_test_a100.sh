@@ -1,17 +1,17 @@
 #!/bin/bash
 #SBATCH --job-name=jupyter
-#SBATCH --output=jupyter_t4.out
-#SBATCH --error=jupyter_t4.err
+#SBATCH --output=jupyter.out
+#SBATCH --error=jupyter.err
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=10
 #SBATCH --time=10:00:00
-#SBATCH --gres=gpu:a100:2
-#SBATCH --mem=10G
+#SBATCH --gres=gpu:a100:1
+#SBATCH --mem=20G
 #SBATCH --mail-type=BEGIN,END,FAIL # Send email on job END and FAIL
 #SBATCH --mail-user=soroush1@yorku.ca
 
 echo "Start Installing and setup env"
-source /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/scripts/prepare_env/setup_env.sh
+source /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/bash/prepare_env/setup_env_node.sh
 
 module list
 
@@ -23,10 +23,12 @@ source $SLURM_TMPDIR/env/bin/activate
 pip install --no-index --upgrade pip
 
 echo "Installing requirements"
-pip install --no-index -r /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/requirements.txt
+pip install --no-index -r requirements.txt
 
 echo "Env has been set up"
 
 pip freeze
 
-srun /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/scripts/notebook/lab.sh
+python /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/scripts/prepare_server/datamodule_imagenet_preparation.py
+
+/home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/bash/notebooks/lab.sh
