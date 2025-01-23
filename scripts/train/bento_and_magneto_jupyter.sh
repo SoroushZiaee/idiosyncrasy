@@ -5,7 +5,7 @@ export CUDA_VISIBLE_DEVICES=0
 arch=resnet50
 loss=logCKA
 hvm_classify=0
-config="bento 94 0.03125 0" # animal neurons mix_rate seed
+config="bento 94 1 0" # animal neurons mix_rate seed
 
 IFS=" " read -ra values <<< "${config}"
 
@@ -37,7 +37,7 @@ python -m cka_reg.main -v \
 --seed_select_neurons $seed \
 --neural_loss $loss \
 --arch $arch \
---epochs 10000 \
+--epochs 2 \
 --step_size 6000 \
 --save_path ${animals}_mix${mix_rate}_seed${seed}_v4 \
 -nd manymonkeys \
@@ -45,6 +45,6 @@ python -m cka_reg.main -v \
 -na $neurons_animal \
 --trials 36 \
 -aei \
---loss_weights 1 1 ${hvm_classify} -mix_rate $mix_rate -causal 1 --val_every 30 \
+--loss_weights 1 1 ${hvm_classify} -mix_rate $mix_rate -causal 0 --val_every 30 \
 --num_workers 7 \
 --fit_animals $fit_animals

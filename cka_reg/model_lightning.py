@@ -163,11 +163,13 @@ class Model_Lightning(LightningModule):
             neural_loss_weight = self.loss_weights_map("Neural")
 
         losses = []
-
+        
         losses.append(
             self.loss_weights_map("ImageNet")
             * self.classification(batch["ImageNet"], "train")
         )
+        
+        print(f"{losses = }")
 
         neural_loss, stim_class_loss = self.similarity_and_classification(
             batch["NeuralData"],
@@ -616,46 +618,92 @@ class Model_Lightning(LightningModule):
 
         return loss
 
+    # def similarity_and_classification(
+    #     self, batch, region, mode, dataset="Stimuli", adversarial=False
+    # ):
+    #     self.set_bn(mode=dataset)
+    #     X, H, Y = self.unpack_batch(batch, flag="similarity")
+
+    #     if adversarial:
+    #         # adversarial attack on labels. requires HVM readouts to be trained.
+    #         X = self.adversaries[f"{mode}_class_adversary"].generate(
+    #             X, Y, F.cross_entropy, output_inds=[1000, 1008]
+    #         )
+
+    #     Y_hat = self.model(X)[:, 1000:1008]
+    #     H_hat = self.regions[region].output
+
+    #     # this allows to test with a different loss than the train loss.
+    #     neural_loss_fnc = self.neural_loss if mode == "train" else self.neural_val_loss
+        
+    #     neural_loss = neural_loss_fnc(H, H_hat)
+    #     # print(neural_loss)
+
+    #     # and compute classification loss  accuracy
+    #     class_loss = F.cross_entropy(Y_hat, Y)
+    #     acc1, acc5 = self.__accuracy(Y_hat, Y, topk=(1, 5))
+    #     # EVD90, PR, features = self.__dimension_analysis(H_hat)
+
+    #     log = {
+    #         f"{neural_loss_fnc.name}_{mode}": neural_loss,
+    #         f"{dataset}_{mode}_loss": class_loss,
+    #         f"{dataset}_{mode}_acc1": acc1,
+    #         f"{dataset}_{mode}_acc5": acc5,
+    #         # f'{dataset}_{mode}_EVD90' : EVD90,
+    #         # f'{dataset}_{mode}_PR' : PR,
+    #         # f'{dataset}_{mode}_features' : features
+    #     }
+
+    #     self.log_dict(log, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+    #     return (neural_loss, class_loss)
+
     def similarity_and_classification(
         self, batch, region, mode, dataset="Stimuli", adversarial=False
     ):
+        print(f"\n=== Starting similarity_and_classification ===")
+        print(f"Mode: {mode}, Dataset: {dataset}, Region: {region}, Adversarial: {adversarial}")
+        
         self.set_bn(mode=dataset)
         X, H, Y = self.unpack_batch(batch, flag="similarity")
+        print(f"Batch shapes - X: {X.shape}, H: {H.shape}, Y: {Y.shape}")
+        print(f"Y values (labels): {Y}")
 
         if adversarial:
-            # adversarial attack on labels. requires HVM readouts to be trained.
+            print("Generating adversarial examples...")
             X = self.adversaries[f"{mode}_class_adversary"].generate(
                 X, Y, F.cross_entropy, output_inds=[1000, 1008]
             )
+            print(f"Adversarial X shape: {X.shape}")
 
         Y_hat = self.model(X)[:, 1000:1008]
         H_hat = self.regions[region].output
+        print(f"Model outputs - Y_hat: {Y_hat.shape}, H_hat: {H_hat.shape}")
+        print(f"Y_hat predicted probabilities:\n{F.softmax(Y_hat, dim=1)}")
 
-        # this allows to test with a different loss than the train loss.
         neural_loss_fnc = self.neural_loss if mode == "train" else self.neural_val_loss
+        print(f"Using neural loss function: {neural_loss_fnc.name}")
         
         neural_loss = neural_loss_fnc(H, H_hat)
-        # print(neural_loss)
-
-        # and compute classification loss  accuracy
         class_loss = F.cross_entropy(Y_hat, Y)
+        print(f"Losses - Neural: {neural_loss:.4f}, Classification: {class_loss:.4f}")
+
         acc1, acc5 = self.__accuracy(Y_hat, Y, topk=(1, 5))
-        # EVD90, PR, features = self.__dimension_analysis(H_hat)
+        print(f"Accuracies - Top1: {acc1:.2f}%, Top5: {acc5:.2f}%")
 
         log = {
             f"{neural_loss_fnc.name}_{mode}": neural_loss,
             f"{dataset}_{mode}_loss": class_loss,
             f"{dataset}_{mode}_acc1": acc1,
-            f"{dataset}_{mode}_acc5": acc5,
-            # f'{dataset}_{mode}_EVD90' : EVD90,
-            # f'{dataset}_{mode}_PR' : PR,
-            # f'{dataset}_{mode}_features' : features
+            f"{dataset}_{mode}_acc5": acc5
         }
+        print("Logging metrics:", log)
 
         self.log_dict(log, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        print("=== Finished similarity_and_classification ===\n")
 
         return (neural_loss, class_loss)
-
+    
     @staticmethod
     def __accuracy(output, target, topk=(1,)):
         """Computes the precision@k for the specified values of k"""

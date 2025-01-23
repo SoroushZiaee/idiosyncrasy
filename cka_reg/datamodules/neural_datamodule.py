@@ -103,6 +103,11 @@ class StimuliBaseModule(LightningDataModule):
         X = self.constructor.get_stimuli(stimuli_partition=stimuli_partition).astype(
             "float32"
         )[: self.n_stimuli]
+        
+        print("-" * 1000)
+        print(f"Stimuli shape: {X.shape}")
+        print("-" * 1000)
+        
 
         return X
 

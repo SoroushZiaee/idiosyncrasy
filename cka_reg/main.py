@@ -78,7 +78,7 @@ def main(hparams):
         deterministic=deterministic,
         profiler="simple",
         # precision=16,
-        fast_dev_run=False,
+        fast_dev_run=True,
     )
 
     if hparams.evaluate:

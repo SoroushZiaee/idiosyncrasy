@@ -4,7 +4,7 @@
 #SBATCH --error=jupyter.err
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=10
-#SBATCH --time=10:00:00
+#SBATCH --time=15:00:00
 #SBATCH --gres=gpu:a100:1
 #SBATCH --mem=20G
 #SBATCH --mail-type=BEGIN,END,FAIL # Send email on job END and FAIL
@@ -23,12 +23,13 @@ source $SLURM_TMPDIR/env/bin/activate
 pip install --no-index --upgrade pip
 
 echo "Installing requirements"
-pip install --no-index -r requirements.txt
+# pip install --no-index -r requirements.txt
+pip install --no-index jupyterlab jupyter
 
 echo "Env has been set up"
 
 pip freeze
 
-python /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/scripts/prepare_server/datamodule_imagenet_preparation.py
+# python /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/scripts/prepare_server/datamodule_imagenet_preparation.py
 
 /home/soroush1/projects/def-kohitij/soroush1/idiosyncrasy/bash/notebooks/lab.sh

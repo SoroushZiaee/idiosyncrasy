@@ -171,3 +171,9 @@ cython_debug/
 notebooks/test/lightning_logs/
 results/
 *.bin
+*.pt
+*.npy
+*.pth
+*.zip
+notebooks/experiments/weights/
+jupyter_env/
